@@ -1,0 +1,53 @@
+{
+  "type": "object",
+  "properties": {
+    "customerId": {
+      "type": "string"
+    },
+    "expectedConsignee": {
+      "type": "string"
+    },
+    "allowedHsPrefixes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "requiredIncoterms": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "allowedPortsOfLoading": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "allowedPortsOfDischarge": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "expectedInvoiceContains": {
+      "type": "string"
+    },
+    "minConfidenceForMatch": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "default": 0.55
+    }
+  },
+  "required": [
+    "customerId"
+  ],
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

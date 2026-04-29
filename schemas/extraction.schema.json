@@ -1,0 +1,201 @@
+{
+  "type": "object",
+  "properties": {
+    "consigneeName": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Extracted text or null if absent/unreadable"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Model confidence 0–1 for this field"
+        }
+      },
+      "required": [
+        "value",
+        "confidence"
+      ],
+      "additionalProperties": false
+    },
+    "hsCode": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Extracted text or null if absent/unreadable"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Model confidence 0–1 for this field"
+        }
+      },
+      "required": [
+        "value",
+        "confidence"
+      ],
+      "additionalProperties": false
+    },
+    "portOfLoading": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Extracted text or null if absent/unreadable"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Model confidence 0–1 for this field"
+        }
+      },
+      "required": [
+        "value",
+        "confidence"
+      ],
+      "additionalProperties": false
+    },
+    "portOfDischarge": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Extracted text or null if absent/unreadable"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Model confidence 0–1 for this field"
+        }
+      },
+      "required": [
+        "value",
+        "confidence"
+      ],
+      "additionalProperties": false
+    },
+    "incoterms": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Extracted text or null if absent/unreadable"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Model confidence 0–1 for this field"
+        }
+      },
+      "required": [
+        "value",
+        "confidence"
+      ],
+      "additionalProperties": false
+    },
+    "descriptionOfGoods": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Extracted text or null if absent/unreadable"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Model confidence 0–1 for this field"
+        }
+      },
+      "required": [
+        "value",
+        "confidence"
+      ],
+      "additionalProperties": false
+    },
+    "grossWeight": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Extracted text or null if absent/unreadable"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Model confidence 0–1 for this field"
+        }
+      },
+      "required": [
+        "value",
+        "confidence"
+      ],
+      "additionalProperties": false
+    },
+    "invoiceNumber": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Extracted text or null if absent/unreadable"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Model confidence 0–1 for this field"
+        }
+      },
+      "required": [
+        "value",
+        "confidence"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "consigneeName",
+    "hsCode",
+    "portOfLoading",
+    "portOfDischarge",
+    "incoterms",
+    "descriptionOfGoods",
+    "grossWeight",
+    "invoiceNumber"
+  ],
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

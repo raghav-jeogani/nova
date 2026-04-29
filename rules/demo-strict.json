@@ -1,0 +1,10 @@
+{
+  "customerId": "demo-strict",
+  "expectedConsignee": "Globex Corporation",
+  "allowedHsPrefixes": ["9999"],
+  "requiredIncoterms": ["DDP"],
+  "allowedPortsOfLoading": ["Hamburg"],
+  "allowedPortsOfDischarge": ["Singapore"],
+  "expectedInvoiceContains": "GX-999",
+  "minConfidenceForMatch": 0.85
+}

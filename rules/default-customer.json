@@ -1,0 +1,10 @@
+{
+  "customerId": "default-customer",
+  "expectedConsignee": "Acme Imports Ltd",
+  "allowedHsPrefixes": ["8471", "8504"],
+  "requiredIncoterms": ["FOB", "CIF"],
+  "allowedPortsOfLoading": ["Shanghai", "Ningbo", "Shenzhen"],
+  "allowedPortsOfDischarge": ["Los Angeles", "Long Beach", "Rotterdam"],
+  "expectedInvoiceContains": "INV-2025",
+  "minConfidenceForMatch": 0.55
+}

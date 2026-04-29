@@ -1,0 +1,411 @@
+{
+  "type": "object",
+  "properties": {
+    "runId": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "customerId": {
+      "type": "string"
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "stage": {
+      "type": "string",
+      "enum": [
+        "uploaded",
+        "extracting",
+        "extracted",
+        "validating",
+        "validated",
+        "routing",
+        "routed",
+        "persisted",
+        "failed"
+      ]
+    },
+    "sourceFilename": {
+      "type": "string"
+    },
+    "sourceMime": {
+      "type": "string"
+    },
+    "extractionRawJson": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "extraction": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "consigneeName": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Extracted text or null if absent/unreadable"
+                },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Model confidence 0–1 for this field"
+                }
+              },
+              "required": [
+                "value",
+                "confidence"
+              ],
+              "additionalProperties": false
+            },
+            "hsCode": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Extracted text or null if absent/unreadable"
+                },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Model confidence 0–1 for this field"
+                }
+              },
+              "required": [
+                "value",
+                "confidence"
+              ],
+              "additionalProperties": false
+            },
+            "portOfLoading": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Extracted text or null if absent/unreadable"
+                },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Model confidence 0–1 for this field"
+                }
+              },
+              "required": [
+                "value",
+                "confidence"
+              ],
+              "additionalProperties": false
+            },
+            "portOfDischarge": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Extracted text or null if absent/unreadable"
+                },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Model confidence 0–1 for this field"
+                }
+              },
+              "required": [
+                "value",
+                "confidence"
+              ],
+              "additionalProperties": false
+            },
+            "incoterms": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Extracted text or null if absent/unreadable"
+                },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Model confidence 0–1 for this field"
+                }
+              },
+              "required": [
+                "value",
+                "confidence"
+              ],
+              "additionalProperties": false
+            },
+            "descriptionOfGoods": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Extracted text or null if absent/unreadable"
+                },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Model confidence 0–1 for this field"
+                }
+              },
+              "required": [
+                "value",
+                "confidence"
+              ],
+              "additionalProperties": false
+            },
+            "grossWeight": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Extracted text or null if absent/unreadable"
+                },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Model confidence 0–1 for this field"
+                }
+              },
+              "required": [
+                "value",
+                "confidence"
+              ],
+              "additionalProperties": false
+            },
+            "invoiceNumber": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Extracted text or null if absent/unreadable"
+                },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Model confidence 0–1 for this field"
+                }
+              },
+              "required": [
+                "value",
+                "confidence"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "consigneeName",
+            "hsCode",
+            "portOfLoading",
+            "portOfDischarge",
+            "incoterms",
+            "descriptionOfGoods",
+            "grossWeight",
+            "invoiceNumber"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "validation": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "customerId": {
+              "type": "string"
+            },
+            "rows": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string",
+                    "enum": [
+                      "consigneeName",
+                      "hsCode",
+                      "portOfLoading",
+                      "portOfDischarge",
+                      "incoterms",
+                      "descriptionOfGoods",
+                      "grossWeight",
+                      "invoiceNumber"
+                    ]
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "match",
+                      "mismatch",
+                      "uncertain"
+                    ]
+                  },
+                  "found": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "expected": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "notes": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "field",
+                  "status"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "hasUncertain": {
+              "type": "boolean"
+            },
+            "hasMismatch": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "customerId",
+            "rows",
+            "hasUncertain",
+            "hasMismatch"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "decision": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "enum": [
+                "auto_approve",
+                "human_review",
+                "draft_amendment"
+              ]
+            },
+            "reasoning": {
+              "type": "string",
+              "minLength": 1
+            },
+            "amendmentSummary": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string"
+                  },
+                  "found": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "expected": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "field",
+                  "found",
+                  "expected"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "kind",
+            "reasoning"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "errorMessage": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "estimatedCostUsd": {
+      "type": "number"
+    }
+  },
+  "required": [
+    "runId",
+    "customerId",
+    "createdAt",
+    "updatedAt",
+    "stage",
+    "sourceFilename",
+    "sourceMime",
+    "extraction",
+    "validation",
+    "decision"
+  ],
+  "additionalProperties": false,
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}
