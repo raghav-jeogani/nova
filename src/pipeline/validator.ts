@@ -136,7 +136,7 @@ function validateField(
       if (f.confidence < minConf) {
         return row("uncertain", { found: f.value, notes: "Low extraction confidence" });
       }
-      return row("match", { found: f.value, notes: "No deterministic rule" });
+      return row("uncertain", { found: f.value, notes: "No deterministic rule" });
     }
     default:
       return row("uncertain", { notes: "Unknown field" });
