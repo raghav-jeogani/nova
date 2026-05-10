@@ -606,7 +606,7 @@ export function App() {
 
               <Paper sx={{ p: 3 }} elevation={1}>
                 <Typography variant="h6" gutterBottom>
-                  Draft reply (editable, never auto-sent)
+                  Draft reply (editable)
                 </Typography>
                 <TextField
                   fullWidth
