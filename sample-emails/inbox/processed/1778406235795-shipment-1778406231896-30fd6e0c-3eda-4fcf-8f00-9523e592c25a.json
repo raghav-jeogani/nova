@@ -1,0 +1,19 @@
+{
+  "shipmentId": "30fd6e0c-3eda-4fcf-8f00-9523e592c25a",
+  "customerId": "default-customer",
+  "sender": "su.ops@example.com",
+  "subject": "Shipment docs (clean)",
+  "attachments": [
+    {
+      "path": "/Users/raghavjeogani/Desktop/Project/nova/sample-docs/sample-clean.pdf"
+    },
+    {
+      "path": "/Users/raghavjeogani/Desktop/Project/nova/sample-docs/sample-clean.pdf",
+      "filename": "invoice-sample-clean.pdf"
+    },
+    {
+      "path": "/Users/raghavjeogani/Desktop/Project/nova/sample-docs/sample-clean.pdf",
+      "filename": "packing-list-sample-clean.pdf"
+    }
+  ]
+}

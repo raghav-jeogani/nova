@@ -1,0 +1,20 @@
+{
+  "shipmentId": "75d32e84-949a-4188-b193-05e643c5089f",
+  "customerId": "default-customer",
+  "sender": "su.ops@example.com",
+  "subject": "Shipment docs (3-way cross-document mismatch)",
+  "attachments": [
+    {
+      "path": "/Users/raghavjeogani/Desktop/Project/nova/sample-docs/cross-doc-a.pdf",
+      "filename": "BOL.pdf"
+    },
+    {
+      "path": "/Users/raghavjeogani/Desktop/Project/nova/sample-docs/cross-doc-b.pdf",
+      "filename": "Commercial-Invoice.pdf"
+    },
+    {
+      "path": "/Users/raghavjeogani/Desktop/Project/nova/sample-docs/cross-doc-c.pdf",
+      "filename": "Packing-List.pdf"
+    }
+  ]
+}

@@ -30,6 +30,7 @@ type RunRow = {
   stage: string;
   sourceFilename: string;
   sourceFilenames?: string[] | null;
+  inboxSubject?: string | null;
   extraction: Record<string, ExtractionField> | null;
   validation: {
     rows: Array<{
@@ -183,6 +184,10 @@ export function App() {
     snippet: string;
   } | null>(null);
   const [draftReply, setDraftReply] = useState("");
+  const [replyToEmail, setReplyToEmail] = useState("");
+  const [sendEmailLoading, setSendEmailLoading] = useState(false);
+  const [sendEmailError, setSendEmailError] = useState<string | null>(null);
+  const [sendEmailSuccess, setSendEmailSuccess] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
   const selectedRun = useMemo(() => runs.find((run) => run.runId === selectedRunId) ?? null, [runs, selectedRunId]);
@@ -200,7 +205,42 @@ export function App() {
   useEffect(() => {
     setDraftReply(selectedRun?.draftReply ?? selectedRun?.decision?.draftReply ?? "");
     setSelectedDiscrepancy(null);
-  }, [selectedRun?.draftReply, selectedRun?.decision?.draftReply]);
+    setSendEmailError(null);
+    setSendEmailSuccess(false);
+  }, [selectedRun?.runId, selectedRun?.draftReply, selectedRun?.decision?.draftReply]);
+
+  const sendDraftEmail = useCallback(async () => {
+    setSendEmailError(null);
+    setSendEmailSuccess(false);
+    const to = replyToEmail.trim();
+    if (!to) {
+      setSendEmailError("Enter the recipient email in To.");
+      return;
+    }
+    if (!draftReply.trim()) {
+      setSendEmailError("Draft reply is empty.");
+      return;
+    }
+    const subjectBase = selectedRun?.inboxSubject?.trim() || "Shipment verification";
+    const subject = `Re: ${subjectBase}`.slice(0, 200);
+    setSendEmailLoading(true);
+    try {
+      const res = await fetch("/api/email/send-draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to, body: draftReply, subject }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        throw new Error(json.error ?? res.statusText);
+      }
+      setSendEmailSuccess(true);
+    } catch (e) {
+      setSendEmailError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSendEmailLoading(false);
+    }
+  }, [replyToEmail, draftReply, selectedRun?.inboxSubject]);
 
   const fetchRuns = useCallback(async (): Promise<RunRow[]> => {
     setLoadingRuns(true);
@@ -615,9 +655,40 @@ export function App() {
                   value={draftReply}
                   onChange={(e) => setDraftReply(e.target.value)}
                 />
-                <Typography variant="caption" color="text.secondary">
-                  CG must always review and send manually outside this prototype.
+                <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+                  Review before sending. The server sends mail over Gmail SMTP using credentials in the environment
+                  (not from the browser).
                 </Typography>
+                <TextField
+                  fullWidth
+                  type="email"
+                  label="To"
+                  placeholder="recipient@example.com"
+                  value={replyToEmail}
+                  onChange={(e) => setReplyToEmail(e.target.value)}
+                  sx={{ mt: 2 }}
+                  autoComplete="email"
+                  helperText="Recipient for the draft reply below."
+                />
+                {sendEmailError && (
+                  <Alert severity="error" sx={{ mt: 2 }}>
+                    {sendEmailError}
+                  </Alert>
+                )}
+                {sendEmailSuccess && (
+                  <Alert severity="success" sx={{ mt: 2 }}>
+                    Email sent.
+                  </Alert>
+                )}
+                <Button
+                  variant="contained"
+                  color="primary"
+                  sx={{ mt: 2 }}
+                  disabled={sendEmailLoading}
+                  onClick={() => void sendDraftEmail()}
+                >
+                  {sendEmailLoading ? "Sending…" : "Send email"}
+                </Button>
               </Paper>
             </>
           ) : (

@@ -12,6 +12,7 @@ import { RunRepository } from "./db/run-repository.js";
 import { defaultRulesLoader, processShipment, processUpload } from "./pipeline/orchestrator.js";
 import { runGroundedNlQuery } from "./nl/guarded-query.js";
 import { startInboxWatcher } from "./ingestion/inbox-watcher.js";
+import { isGmailSmtpConfigured, sendPlainTextViaGmail } from "./email/send-gmail.js";
 
 const PORT = Number(process.env.PORT ?? 3001);
 const RULES_DIR = process.env.RULES_DIR ?? join(process.cwd(), "rules");
@@ -168,6 +169,39 @@ async function main(): Promise<void> {
     res.json({ ok: true, shipmentId, filename });
   });
 
+  app.post("/api/email/send-draft", express.json(), async (req, res) => {
+    if (!isGmailSmtpConfigured()) {
+      res.status(503).json({
+        error:
+          "Gmail SMTP not configured. In the project root .env set GMAIL_USER and GMAIL_APP_PASSWORD (Google App Password), or SMTP_USER and SMTP_PASS — then save the file and restart the API (env is not hot-reloaded).",
+      });
+      return;
+    }
+    const to = typeof req.body?.to === "string" ? req.body.to.trim() : "";
+    const text = typeof req.body?.body === "string" ? req.body.body : "";
+    const subject =
+      typeof req.body?.subject === "string" && req.body.subject.trim()
+        ? String(req.body.subject).trim()
+        : "Nova CG — shipment draft reply";
+    if (!to) {
+      res.status(400).json({ error: "Field 'to' (recipient email) is required" });
+      return;
+    }
+    if (!text.trim()) {
+      res.status(400).json({ error: "Field 'body' (draft reply text) is required and cannot be empty" });
+      return;
+    }
+    try {
+      await sendPlainTextViaGmail({ to, subject, text });
+      res.json({ ok: true });
+    } catch (err) {
+      console.error(err);
+      const message = err instanceof Error ? err.message : "Failed to send email";
+      const status = message.includes("Invalid recipient") ? 400 : 502;
+      res.status(status).json({ error: message });
+    }
+  });
+
   app.post("/api/query/nl", express.json(), async (req, res) => {
     if (!openaiKey) {
       res.status(503).json({ error: "OPENAI_API_KEY not configured" });
@@ -226,6 +260,11 @@ async function main(): Promise<void> {
 
   const server: Server = app.listen(PORT, "0.0.0.0", () => {
     console.info(`API listening on http://localhost:${PORT}`);
+    console.info(
+      isGmailSmtpConfigured()
+        ? "Gmail SMTP: configured (send-draft endpoint enabled)"
+        : "Gmail SMTP: not configured — set GMAIL_USER + GMAIL_APP_PASSWORD (or SMTP_USER + SMTP_PASS) in .env and restart the API"
+    );
   });
 
   const shutdown = async () => {
