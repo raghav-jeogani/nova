@@ -21,7 +21,14 @@ export const Run = initRunModel(sequelize);
 export async function initDb(): Promise<void> {
   await sequelize.authenticate();
   await sequelize.sync({ alter: false });
+  await sequelize.query(`ALTER TABLE runs ADD COLUMN IF NOT EXISTS shipment_id TEXT;`);
+  await sequelize.query(`ALTER TABLE runs ADD COLUMN IF NOT EXISTS source_filenames_json TEXT;`);
+  await sequelize.query(`ALTER TABLE runs ADD COLUMN IF NOT EXISTS source_mimes_json TEXT;`);
+  await sequelize.query(`ALTER TABLE runs ADD COLUMN IF NOT EXISTS inbox_sender TEXT;`);
+  await sequelize.query(`ALTER TABLE runs ADD COLUMN IF NOT EXISTS inbox_subject TEXT;`);
+  await sequelize.query(`ALTER TABLE runs ADD COLUMN IF NOT EXISTS draft_reply TEXT;`);
   await sequelize.query(`CREATE INDEX IF NOT EXISTS idx_runs_created_at ON runs (created_at DESC);`);
   await sequelize.query(`CREATE INDEX IF NOT EXISTS idx_runs_decision_kind ON runs (decision_kind);`);
   await sequelize.query(`CREATE INDEX IF NOT EXISTS idx_runs_flagged ON runs (flagged_human);`);
+  await sequelize.query(`CREATE INDEX IF NOT EXISTS idx_runs_shipment_id ON runs (shipment_id);`);
 }

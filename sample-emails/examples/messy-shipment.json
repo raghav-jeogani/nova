@@ -1,0 +1,10 @@
+{
+  "customerId": "default-customer",
+  "sender": "su.ops@example.com",
+  "subject": "Shipment docs - messy set",
+  "attachments": [
+    { "path": "../../sample-docs/sample-messy.pdf", "filename": "BOL-messy.pdf" },
+    { "path": "../../sample-docs/sample-messy.pdf", "filename": "Invoice-messy.pdf" },
+    { "path": "../../sample-docs/sample-messy.pdf", "filename": "PackingList-messy.pdf" }
+  ]
+}

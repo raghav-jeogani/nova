@@ -65,5 +65,72 @@ async function buildMessy() {
   console.log("Wrote sample-messy.pdf");
 }
 
+/** Three synthetic trade PDFs with different consignee / HS / incoterms for cross-document consistency checks. */
+async function buildCrossDocSet() {
+  const fontSize = 11;
+  const sets: Array<{ file: string; title: string; lines: string[] }> = [
+    {
+      file: "cross-doc-a.pdf",
+      title: "BILL OF LADING",
+      lines: [
+        "",
+        "Consignee: Northwind Traders GmbH",
+        "Invoice No: INV-2025-CROSS-A",
+        "Incoterms: FOB Shanghai",
+        "Port of Loading: Shanghai",
+        "Port of Discharge: Los Angeles",
+        "HS Code: 8471300100",
+        "Description: Laptop computers — batch A",
+        "Gross Weight: 1000 KG",
+      ],
+    },
+    {
+      file: "cross-doc-b.pdf",
+      title: "COMMERCIAL INVOICE",
+      lines: [
+        "",
+        "Consignee: Contoso Global BV",
+        "Invoice No: INV-2025-CROSS-B",
+        "Incoterms: CIF Rotterdam",
+        "Port of Loading: Ningbo",
+        "Port of Discharge: Rotterdam",
+        "HS Code: 8504409550",
+        "Description: Power supplies — batch B",
+        "Gross Weight: 1100 KG",
+      ],
+    },
+    {
+      file: "cross-doc-c.pdf",
+      title: "PACKING LIST",
+      lines: [
+        "",
+        "Consignee: Fabrikam Industries SAS",
+        "Invoice No: INV-2025-CROSS-C",
+        "Incoterms: EXW Shenzhen",
+        "Port of Loading: Shenzhen",
+        "Port of Discharge: Long Beach",
+        "HS Code: 8471605010",
+        "Description: Mixed IT equipment — batch C",
+        "Gross Weight: 1200 KG",
+      ],
+    },
+  ];
+  for (const { file, title, lines } of sets) {
+    const doc = await PDFDocument.create();
+    const page = doc.addPage([612, 792]);
+    const font = await doc.embedFont(StandardFonts.Helvetica);
+    let y = 720;
+    page.drawText(title, { x: 50, y, size: 16, font, color: rgb(0, 0, 0) });
+    y -= 32;
+    for (const line of lines) {
+      page.drawText(line, { x: 50, y, size: line === "" ? fontSize : fontSize, font, color: rgb(0, 0, 0) });
+      y -= line === "" ? 10 : 22;
+    }
+    writeFileSync(join(outDir, file), await doc.save());
+    console.log(`Wrote ${file}`);
+  }
+}
+
 await buildClean();
 await buildMessy();
+await buildCrossDocSet();

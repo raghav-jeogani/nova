@@ -1,0 +1,10 @@
+{
+  "customerId": "default-customer",
+  "sender": "su.ops@example.com",
+  "subject": "Shipment docs (3-way cross-document mismatch)",
+  "attachments": [
+    { "path": "../../sample-docs/cross-doc-a.pdf", "filename": "BOL.pdf" },
+    { "path": "../../sample-docs/cross-doc-b.pdf", "filename": "Commercial-Invoice.pdf" },
+    { "path": "../../sample-docs/cross-doc-c.pdf", "filename": "Packing-List.pdf" }
+  ]
+}

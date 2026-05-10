@@ -1,6 +1,6 @@
 # Nova pipeline
 
-Gated pipeline for trade documents (BOL, invoice, packing list, etc.): **Extractor** (vision LLM) → **Validator** (customer rules) → **Router** (policy + explicit reasoning) → **PostgreSQL** persistence and **grounded NL→SQL** analytics. Includes a **React + Material UI** UI (bundled with **Vite**) for one-document runs.
+Part 2 workflow-ready pipeline for trade documents (BOL, invoice, packing list): **Extractor** (vision LLM per attachment) → **Validator** (customer rules on merged extract + **per-document** rule tables + **cross-attachment** consistency) → **Router** (decision + editable draft reply) → **PostgreSQL** persistence and **grounded NL→SQL** analytics. Includes a **React + Material UI** CG workflow UI with a simulated SU inbox (JSON drop + watcher).
 
 ## Prerequisites
 
@@ -18,7 +18,7 @@ cp .env.example .env
 # DATABASE_URL=postgresql://postgres:postgres@localhost:5432/nova_daw
 
 npm install
-npm run db:generate-samples   # creates sample-docs/*.pdf (optional if PDFs already present)
+npm run db:generate-samples   # creates sample-docs/*.pdf (required for cross-doc demo PDFs)
 npm run dev
 ```
 
@@ -39,17 +39,28 @@ OPENAI_API_KEY=... DATABASE_URL=postgresql://... npm start
 |----------|-------------|
 | `DATABASE_URL` | **Required.** PostgreSQL connection URI (`postgresql://…`) |
 | `PG_POOL_MAX` | Optional max clients in pool (default `10`) |
-| `OPENAI_API_KEY` | Required for extraction and NL→SQL |
+| `OPENAI_API_KEY` | Required for extraction, shipment processing, and NL→SQL |
 | `OPENAI_VISION_MODEL` | Default `gpt-4o` |
 | `OPENAI_TEXT_MODEL` | Default `gpt-4o-mini` (NL layer) |
 | `PORT` | API port (default `3001`) |
 | `RULES_DIR` | Directory of `<customerId>.json` rule files (default `./rules`) |
+| `INBOX_DIR` | Simulated SU inbox folder watched by the API (default `./sample-emails/inbox`) |
 
 ## API
 
-- `POST /api/runs` — `multipart/form-data` with field `file` (PDF or image) and optional `customerId` (defaults to `default-customer`).
-- `GET /api/runs/:id` — Fetch persisted run (extraction, validation, decision).
+- `GET /api/health` — `{ ok, db }` liveness.
+- `POST /api/runs` — `multipart/form-data` with field `file` (PDF or image) and optional `customerId` (legacy single-document upload).
+- `GET /api/runs` — List recent runs/shipments (`?limit=`, capped at 100). Each row includes extraction, validation (merged `rows`, optional `perDocument`, optional `crossDocument`), decision, timestamps, attachment metadata.
+- `GET /api/runs/:id` — Fetch one persisted run by `run_id`.
+- `POST /api/inbox/simulate` — JSON body `{ "template": "clean" | "messy" | "cross-inconsistent", "customerId"?: string, ... }`. Writes a shipment JSON into `INBOX_DIR`; the inbox watcher picks it up and runs `processShipment` (multi-attachment). `cross-inconsistent` requires `cross-doc-*.pdf` from `npm run db:generate-samples` (returns **400** with a hint if files are missing).
 - `POST /api/query/nl` — JSON `{ "question": "..." }`; returns `{ sql, rows, rowCount }` after **read-only** validation (single `SELECT` on `runs` only).
+
+## Pipeline behavior (summary)
+
+1. **Multi-attachment shipments** — Inbox JSON lists several PDFs/images; each file is extracted in parallel, then merged (highest confidence per field) for rule validation and routing.
+2. **Merged validation** — `validateExtraction(merged, rules)` drives **router** policy (mismatch / uncertain / cross-doc inconsistent → human review or draft amendment).
+3. **Per-document validation** — Same rules run on each attachment’s extraction; stored on `validation.perDocument[]` for the UI (not a second routing pass).
+4. **Cross-document consistency** — For each of **consigneeName**, **hsCode**, **incoterms**, **portOfLoading**, **portOfDischarge**, values are compared across attachments after extraction. Rows are **consistent**, **inconsistent**, or **insufficient_data**. Inconsistencies feed the router (e.g. draft amendment) and the UI.
 
 ## Customer rules
 
@@ -57,7 +68,7 @@ JSON files in `rules/` named `<customerId>.json`. Unknown `customerId` falls bac
 
 ## Contracts and JSON Schema
 
-TypeScript types and Zod live under `src/contracts/`. Committed JSON Schema snapshots:
+TypeScript types and Zod live under `src/contracts/`. Persisted runs use `validationResultSchema`, including optional `perDocument` and `crossDocument`. Committed JSON Schema snapshots:
 
 ```bash
 npm run export-schemas   # writes ./schemas/*.schema.json
@@ -65,11 +76,35 @@ npm run export-schemas   # writes ./schemas/*.schema.json
 
 ## Sample documents
 
-- `sample-docs/sample-clean.pdf` — aligns with `rules/default-customer.json` (intended path: auto-approve after successful extraction).
-- `sample-docs/sample-messy.pdf` — noisy layout / ambiguous text (intended path: uncertain fields → **human review**, never silent approval).
+| File | Purpose |
+|------|---------|
+| `sample-docs/sample-clean.pdf` | Aligns with `rules/default-customer.json` for a clean extraction path. |
+| `sample-docs/sample-messy.pdf` | Noisy layout / ambiguous text (uncertain fields → human review). |
+| `sample-docs/cross-doc-a.pdf`, `cross-doc-b.pdf`, `cross-doc-c.pdf` | Three deliberate **different** consignee / HS / incoterm / port lines for **cross-inconsistent** simulate / examples. |
 
-Regenerate with:
+- `sample-emails/examples/*.json` — Example inbox payloads (paths relative to `sample-emails/inbox`). Includes `cross-inconsistent-shipment.json` for manual copy into the inbox.
+
+Regenerate PDFs with:
 
 ```bash
 npm run db:generate-samples
 ```
+
+## CG workflow UI (`src/client/App.tsx`)
+
+- **Incoming trigger** — Buttons: simulate **clean**, **messy**, or **3-doc cross mismatch** (`cross-inconsistent`), plus refresh and show/hide history.
+- **Incoming list** — Per run: timestamp + stage chip, shipment id, `#customerId · docs : N`.
+- **Shipment summary** (above verification) — `customerId` and bulleted attachment names.
+- **Verification** — For new runs with `validation.perDocument`, one table per attachment: **“Verification result for document *n*: *filename*”** (rule status per field). Older runs without `perDocument` show a single merged table.
+- **Discrepancy detail** — (1) Narrative blocks for each **cross-document inconsistent** field: distinct values across files, per-file values, reference/notes. (2) Optional detail when you click a row in a verification table. (3) Summary table of all cross-document check rows.
+- **Draft reply** — Editable; never auto-sent.
+
+## Part 2 demo flow
+
+1. Start the app with `npm run dev` and ensure `OPENAI_API_KEY` and `DATABASE_URL` are set.
+2. Open the UI at `http://localhost:5173`.
+3. Use **Simulate clean shipment email**, **Simulate messy shipment email**, and **Simulate 3-doc cross mismatch** (after `npm run db:generate-samples`).
+4. Select a run in **Incoming** and walk the panels: shipment summary → per-document verification (when present) → discrepancy / cross-doc narrative → draft reply.
+5. Run a grounded query, for example:
+   - `show me everything pending review for customer default-customer`
+   - `how many shipments were flagged this week`

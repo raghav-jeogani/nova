@@ -4,15 +4,18 @@ import cors from "cors";
 import multer from "multer";
 import OpenAI from "openai";
 import { join } from "node:path";
-import { existsSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import type { Server } from "node:http";
+import { v4 as uuidv4 } from "uuid";
 import { sequelize, initDb } from "./db/sequelize.js";
 import { RunRepository } from "./db/run-repository.js";
-import { defaultRulesLoader, processUpload } from "./pipeline/orchestrator.js";
+import { defaultRulesLoader, processShipment, processUpload } from "./pipeline/orchestrator.js";
 import { runGroundedNlQuery } from "./nl/guarded-query.js";
+import { startInboxWatcher } from "./ingestion/inbox-watcher.js";
 
 const PORT = Number(process.env.PORT ?? 3001);
 const RULES_DIR = process.env.RULES_DIR ?? join(process.cwd(), "rules");
+const INBOX_DIR = process.env.INBOX_DIR ?? join(process.cwd(), "sample-emails", "inbox");
 const clientDist = join(process.cwd(), "dist", "client");
 
 const upload = multer({
@@ -93,6 +96,78 @@ async function main(): Promise<void> {
     res.json({ run: row });
   });
 
+  app.get("/api/runs", async (req, res) => {
+    const limit = Math.min(Number(req.query.limit ?? 25) || 25, 100);
+    const rows = await runs.listRecent(limit);
+    res.json({ runs: rows });
+  });
+
+  app.post("/api/inbox/simulate", express.json(), async (req, res) => {
+    const raw = req.body?.template;
+    const template =
+      raw === "messy"
+        ? "messy"
+        : raw === "cross-inconsistent" || raw === "crossInconsistent"
+          ? "cross-inconsistent"
+          : "clean";
+    const customerId =
+      typeof req.body?.customerId === "string" && req.body.customerId.trim()
+        ? req.body.customerId.trim()
+        : "default-customer";
+    const shipmentId = uuidv4();
+    const filename = `shipment-${Date.now()}-${shipmentId}.json`;
+    const sampleDocs = join(process.cwd(), "sample-docs");
+    if (template === "cross-inconsistent") {
+      for (const name of ["cross-doc-a.pdf", "cross-doc-b.pdf", "cross-doc-c.pdf"]) {
+        if (!existsSync(join(sampleDocs, name))) {
+          res.status(400).json({
+            error: `Missing sample PDF ${name}. Run: npm run db:generate-samples`,
+          });
+          return;
+        }
+      }
+    }
+
+    const payload =
+      template === "cross-inconsistent"
+        ? {
+            shipmentId,
+            customerId,
+            sender: req.body?.sender ?? "su.ops@example.com",
+            subject: req.body?.subject ?? "Shipment docs (3-way cross-document mismatch)",
+            attachments: [
+              { path: join(sampleDocs, "cross-doc-a.pdf"), filename: "BOL.pdf" },
+              { path: join(sampleDocs, "cross-doc-b.pdf"), filename: "Commercial-Invoice.pdf" },
+              { path: join(sampleDocs, "cross-doc-c.pdf"), filename: "Packing-List.pdf" },
+            ],
+          }
+        : (() => {
+            const attachmentName = template === "messy" ? "sample-messy.pdf" : "sample-clean.pdf";
+            return {
+              shipmentId,
+              customerId,
+              sender: req.body?.sender ?? "su.ops@example.com",
+              subject: req.body?.subject ?? `Shipment docs (${template})`,
+              attachments: [
+                {
+                  path: join(sampleDocs, attachmentName),
+                },
+                {
+                  path: join(sampleDocs, attachmentName),
+                  filename: `invoice-${attachmentName}`,
+                },
+                {
+                  path: join(sampleDocs, attachmentName),
+                  filename: `packing-list-${attachmentName}`,
+                },
+              ],
+            };
+          })();
+    mkdirSync(INBOX_DIR, { recursive: true });
+    writeFileSync(join(INBOX_DIR, filename), JSON.stringify(payload, null, 2), "utf8");
+    res.json({ ok: true, shipmentId, filename });
+  });
+
   app.post("/api/query/nl", express.json(), async (req, res) => {
     if (!openaiKey) {
       res.status(503).json({ error: "OPENAI_API_KEY not configured" });
@@ -129,11 +204,32 @@ async function main(): Promise<void> {
     });
   });
 
+  const stopInboxWatcher = startInboxWatcher({
+    inboxDir: INBOX_DIR,
+    onShipment: async (shipment) => {
+      if (!openaiKey) return;
+      await processShipment(
+        { openai, runs, loadRules },
+        {
+          shipmentId: shipment.shipmentId,
+          customerId: shipment.customerId,
+          inboxSender: shipment.inboxSender,
+          inboxSubject: shipment.inboxSubject,
+          attachments: shipment.attachments,
+        }
+      );
+    },
+    onError: (err) => {
+      console.error("Inbox watcher error:", err);
+    },
+  });
+
   const server: Server = app.listen(PORT, "0.0.0.0", () => {
     console.info(`API listening on http://localhost:${PORT}`);
   });
 
   const shutdown = async () => {
+    stopInboxWatcher();
     await new Promise<void>((resolve) => server.close(() => resolve()));
     await sequelize.close().catch(() => {});
     process.exit(0);

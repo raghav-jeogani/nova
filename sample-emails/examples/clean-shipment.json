@@ -1,0 +1,10 @@
+{
+  "customerId": "default-customer",
+  "sender": "su.ops@example.com",
+  "subject": "Shipment docs - clean set",
+  "attachments": [
+    { "path": "../../sample-docs/sample-clean.pdf", "filename": "BOL-clean.pdf" },
+    { "path": "../../sample-docs/sample-clean.pdf", "filename": "Invoice-clean.pdf" },
+    { "path": "../../sample-docs/sample-clean.pdf", "filename": "PackingList-clean.pdf" }
+  ]
+}

@@ -6,6 +6,7 @@ const SCHEMA_HINT = `
 Table: runs
 Columns:
 - run_id TEXT (UUID)
+- shipment_id TEXT (groups multi-document shipment runs)
 - customer_id TEXT
 - created_at TIMESTAMPTZ
 - updated_at TIMESTAMPTZ
@@ -14,6 +15,7 @@ Columns:
 - source_mime TEXT
 - decision_kind TEXT — one of: auto_approve, human_review, draft_amendment
 - flagged_human INTEGER — 1 if human review or amendment needed
+- draft_reply TEXT
 - estimated_cost_usd DOUBLE PRECISION
 - error_message TEXT
 JSON payloads are in extraction_json, validation_json, decision_json (TEXT; parse as JSON in queries if needed).

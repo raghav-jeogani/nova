@@ -20,17 +20,23 @@ export type PipelineStage = z.infer<typeof pipelineStageSchema>;
 
 export const persistedRunSchema = z.object({
   runId: z.string().uuid(),
+  shipmentId: z.string().optional(),
   customerId: z.string(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
   stage: pipelineStageSchema,
   sourceFilename: z.string(),
   sourceMime: z.string(),
+  sourceFilenames: z.array(z.string()).optional(),
+  sourceMimes: z.array(z.string()).optional(),
+  inboxSender: z.string().nullable().optional(),
+  inboxSubject: z.string().nullable().optional(),
   /** Raw / debug payload from vision step (optional, truncated in API) */
   extractionRawJson: z.string().nullable().optional(),
   extraction: extractionOutputSchema.nullable(),
   validation: validationResultSchema.nullable(),
   decision: routerDecisionSchema.nullable(),
+  draftReply: z.string().nullable().optional(),
   errorMessage: z.string().nullable().optional(),
   /** Cumulative estimated USD cost for model calls on this run */
   estimatedCostUsd: z.number().optional(),

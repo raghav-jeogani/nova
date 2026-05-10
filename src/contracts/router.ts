@@ -13,13 +13,17 @@ export const routerDecisionSchema = z.object({
   kind: routerDecisionKindSchema,
   /** Human-readable explanation for UI and audit */
   reasoning: z.string().min(1),
+  /** Draft email body for CG to review/edit before send */
+  draftReply: z.string().optional(),
   /** Optional structured discrepancies for amendment path */
   amendmentSummary: z
     .array(
       z.object({
         field: z.string(),
+        filename: z.string().optional(),
         found: z.string().nullable(),
         expected: z.string().nullable(),
+        sourceSnippet: z.string().nullable().optional(),
       })
     )
     .optional(),
