@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ChangeEvent } from "react";
 import {
   Alert,
   Box,
@@ -189,6 +189,12 @@ export function App() {
   const [sendEmailError, setSendEmailError] = useState<string | null>(null);
   const [sendEmailSuccess, setSendEmailSuccess] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [nlQuestion, setNlQuestion] = useState(
+    "How many shipments for customer default-customer are pending review (flagged for human)?"
+  );
+  const [nlResult, setNlResult] = useState<{ sql: string; rows: unknown[]; rowCount: number } | null>(null);
+  const [nlError, setNlError] = useState<string | null>(null);
+  const [nlLoading, setNlLoading] = useState(false);
 
   const selectedRun = useMemo(() => runs.find((run) => run.runId === selectedRunId) ?? null, [runs, selectedRunId]);
   const crossDocInconsistentRows = useMemo(() => {
@@ -308,6 +314,28 @@ export function App() {
       setLoadingSimulate(false);
     }
   }, [fetchRuns]);
+
+  const runNlQuery = useCallback(async () => {
+    setNlError(null);
+    setNlResult(null);
+    setNlLoading(true);
+    try {
+      const res = await fetch("/api/query/nl", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: nlQuestion }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.error ?? res.statusText);
+      }
+      setNlResult(json as { sql: string; rows: unknown[]; rowCount: number });
+    } catch (e) {
+      setNlError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setNlLoading(false);
+    }
+  }, [nlQuestion]);
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -698,6 +726,64 @@ export function App() {
               </Typography>
             </Paper>
           )}
+
+          <Paper sx={{ p: 3 }} elevation={1}>
+            <Typography variant="h6" gutterBottom>
+              Grounded NL → SQL (read-only)
+            </Typography>
+            <Typography variant="body2" color="text.secondary" paragraph>
+              Ask analytics questions in plain English. The server translates to a single{" "}
+              <Box component="code">SELECT</Box> on <Box component="code">runs</Box>, validates it, then executes it.
+              Example: pending review by customer, counts by <Box component="code">decision_kind</Box>, etc.
+            </Typography>
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems={{ sm: "flex-start" }}>
+              <TextField
+                label="Question"
+                fullWidth
+                multiline
+                minRows={2}
+                value={nlQuestion}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setNlQuestion(e.target.value)}
+              />
+              <Button
+                variant="contained"
+                onClick={() => void runNlQuery()}
+                disabled={nlLoading}
+                sx={{ flexShrink: 0, alignSelf: { sm: "flex-start" } }}
+              >
+                {nlLoading ? "Running…" : "Run query"}
+              </Button>
+            </Stack>
+            {nlError && (
+              <Alert severity="error" sx={{ mt: 2 }}>
+                {nlError}
+              </Alert>
+            )}
+            {nlResult && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="body2" gutterBottom>
+                  SQL: <Box component="code">{nlResult.sql}</Box>
+                </Typography>
+                <Typography variant="body2" gutterBottom>
+                  Rows: <strong>{nlResult.rowCount}</strong>
+                </Typography>
+                <Box
+                  component="pre"
+                  sx={{
+                    bgcolor: "action.hover",
+                    p: 2,
+                    borderRadius: 1,
+                    overflow: "auto",
+                    fontSize: 12,
+                    m: 0,
+                    maxHeight: 280,
+                  }}
+                >
+                  {JSON.stringify(nlResult.rows, null, 2)}
+                </Box>
+              </Box>
+            )}
+          </Paper>
         </Stack>
       </Stack>
     </Container>
